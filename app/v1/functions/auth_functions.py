@@ -52,5 +52,5 @@ async def get_user_by_email(email: str):
 def create_access_token(user_id, role):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": user_id, "role": role, "exp": expire}
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(payload, key=SECRET_KEY, algorithm=ALGORITHM)
 
