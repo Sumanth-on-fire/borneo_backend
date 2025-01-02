@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from app.v1.functions.auth_functions import authenticate_user, create_access_token, create_user, get_user_by_email
+from app.v1.functions.auth_functions import authenticate_user, autheticate_and_change_password, create_access_token, create_user, get_user_by_email
 from app.database import database_control
 from app.v1.functions.logs_functions import add_activity_log
-from app.v1.schema.auth_schema import LoginSchema, SignupSchema, TokenResponse
+from app.v1.schema.auth_schema import LoginSchema, SignupSchema, TokenResponse, UpdatePasswordSchema
 import jwt
 import os
 from datetime import datetime, timedelta
@@ -37,7 +37,7 @@ async def login(data: LoginSchema):
     token = create_access_token(user["id"], user["role"])
     
     # Record login activity
-    await add_activity_log("LOGIN", user["email"], "User logged in")
+    await add_activity_log("Login", user["email"], data.ip_address)
     
     return {
         "access_token": token,
@@ -61,6 +61,8 @@ async def signup(data: SignupSchema):
 
     # Create a new user
     await create_user(data)
+
+    await add_activity_log("Login", data.email, data.ip_address)
 
     # Fetch the newly created user's details
     new_user = await get_user_by_email(data.email)
@@ -95,3 +97,8 @@ async def get_profile(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+
+@router.post("/updatepassword")
+async def updatePassword(data: UpdatePasswordSchema):
+    return await autheticate_and_change_password(data.email, data.current_password, data.new_password)

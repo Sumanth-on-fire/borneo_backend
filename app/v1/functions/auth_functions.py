@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 import jwt
 from datetime import datetime, timedelta
 from hashlib import sha256
@@ -32,25 +33,26 @@ async def create_user(data):
     })
 
 async def get_user_by_email(email: str):
-    query = "SELECT id, username, email, role, phone_number, address, status FROM sdm.users WHERE email = :email"
+    query = "SELECT id, username, email, role, phone_number, address, status FROM sdm.users WHERE email=:email"
     return await database_control.fetch_one(query, {"email": email})
 
-# def create_access_token(user_id: int) -> str:
-#     """
-#     Generates a JWT access token for a given user ID.
-#     """
-#     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-#     payload = {"sub": user_id, "exp": expire}
-#     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-#     return token
-
-# async def authenticate_user(username, password):
-#     hashed_password = sha256(password.encode()).hexdigest()
-#     query = "SELECT * FROM sdm.users WHERE username = :username AND password = :password"
-#     return await database_control.fetch_one(query, {"username": username, "password": hashed_password})
-
-def create_access_token(user_id, role):
+async def create_access_token(user_id, role):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": user_id, "role": role, "exp": expire}
     return jwt.encode(payload, key=SECRET_KEY, algorithm=ALGORITHM)
 
+
+async def autheticate_and_change_password(email: str, curret_password: str, new_password: str):
+    hashed_current_password = sha256(curret_password.encode()).hexdigest()
+    hashed_new_password = sha256(new_password.encode()).hexdigest()
+    query = "SELECT password FROM sdm.users WHERE email = :email"
+    get_password_object = await database_control.fetch_one(query, {"email": email})
+    if get_password_object.password == hashed_current_password:
+        query = """
+                UPDATE sdm.users 
+                set password=:password where email=:email
+                """ 
+        await database_control.execute(query=query, values={"password": hashed_new_password ,"email": email})
+        return True
+    return False    
+    
