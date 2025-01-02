@@ -49,7 +49,7 @@ async def login(data: LoginSchema):
 @router.post("/logout")
 async def logout(data: LogoutSchema):
     # Record logout activity
-    await add_activity_log("LOGOUT", data.username, data.ip_address)
+    await add_activity_log("Logout", data.username, data.ip_address)
     return {"message": "User logged out successfully"}
 
 @router.post("/signup", response_model=TokenResponse)
