@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from app.v1.functions.auth_functions import authenticate_user, autheticate_and_change_password, create_access_token, create_user, get_user_by_email
 from app.database import database_control
 from app.v1.functions.logs_functions import add_activity_log
-from app.v1.schema.auth_schema import LoginSchema, SignupSchema, TokenResponse, UpdatePasswordSchema
+from app.v1.schema.auth_schema import LoginSchema, LogoutSchema, SignupSchema, TokenResponse, UpdatePasswordSchema
 import jwt
 import os
 from datetime import datetime, timedelta
@@ -47,9 +47,9 @@ async def login(data: LoginSchema):
     }
 
 @router.post("/logout")
-async def logout(email: str):
+async def logout(data: LogoutSchema):
     # Record logout activity
-    await add_activity_log("LOGOUT", email, "User logged out")
+    await add_activity_log("LOGOUT", data.username, data.ip_address)
     return {"message": "User logged out successfully"}
 
 @router.post("/signup", response_model=TokenResponse)

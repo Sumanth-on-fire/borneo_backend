@@ -15,8 +15,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 async def authenticate_user(username: str, password: str):
     hashed_password = sha256(password.encode()).hexdigest()
-    query = "SELECT id, email, role FROM sdm.users WHERE username = :username AND password = :password"
-    user = await database_control.fetch_one(query, {"username": username, "password": hashed_password})
+    if "@" in username: 
+        query = "SELECT id, email, role FROM sdm.users WHERE email = :username AND password = :password"
+        user = await database_control.fetch_one(query, {"username": username, "password": hashed_password})
+    else:
+        query = "SELECT id, email, role FROM sdm.users WHERE username = :username AND password = :password"
+        user = await database_control.fetch_one(query, {"username": username, "password": hashed_password})
     return user
 
 async def create_user(data):
@@ -29,14 +33,14 @@ async def create_user(data):
         "username": data.username,
         "email": data.email,
         "password": hashed_password,
-        "role": "User",  # Default role
+        "role": "Admin",  # Default role
     })
 
 async def get_user_by_email(email: str):
     query = "SELECT id, username, email, role, phone_number, address, status FROM sdm.users WHERE email=:email"
     return await database_control.fetch_one(query, {"email": email})
 
-async def create_access_token(user_id, role):
+def create_access_token(user_id, role):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": user_id, "role": role, "exp": expire}
     return jwt.encode(payload, key=SECRET_KEY, algorithm=ALGORITHM)

@@ -20,6 +20,10 @@ class LoginSchema(BaseModel):
     password: str
     ip_address: str
 
+class LogoutSchema(BaseModel):
+    username: str
+    ip_address: str
+
 class SignupSchema(BaseModel):
     username: str
     email: EmailStr
